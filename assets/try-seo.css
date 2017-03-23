@@ -1,0 +1,8 @@
+#try-seo label { display: inline-block; margin-bottom: 10px; }
+#try-seo .character_count { text-align: right; color: #aaa; font-size: 12px; display: block; margin: 5px 0 0; }
+#try-seo .character_count.good { color: #7eb900; }
+#try-seo .character_count.near { color: #ffa500; }
+#try-seo .character_count.over { color: #DC3912; }
+#try-seo .seo-error { color: #DC3912; float: left; font-size: 12px; display: block; margin: 5px 0 0; }
+#try-seo .seo-error a { color: #DC3912 !important; }
+#try-seo .seo-error a:hover { text-decoration: none !important; }
