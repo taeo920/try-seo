@@ -28,7 +28,7 @@ jQuery(document).ready(function() {
 		// Description vars and watcher
 		var description = jQuery('#try-seo #seo_description');
 		var description_counter = jQuery('#try-seo #character_count_desc');
-		var description_total = 155;
+		var description_total = 300;
 		var description_current = jQuery('#post-body #content');
 		
 		seo_get_count(description, description_counter, description_total);
