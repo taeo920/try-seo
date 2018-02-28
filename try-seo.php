@@ -21,7 +21,7 @@ if ( __FILE__ == $_SERVER['SCRIPT_FILENAME'] )
 
 class TRY_SEO {
 	var $google_title_limit = 60;
-	var $google_description_limit = 155; 
+	var $google_description_limit = 300; 
 
 	public function __construct() {
 		
