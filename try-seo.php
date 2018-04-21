@@ -63,7 +63,7 @@ class TRY_SEO {
 		global $post;
 		$post_meta = get_post_custom( $post->ID );
 		$seo_title = ( array_key_exists('seo_title', $post_meta ) ) ? $this->clean_attr( $post_meta['seo_title'][0] ) : null;
-		$seo_title_default = $this->get_post_title( true );
+		$seo_title_default = $this->get_post_title( true ) . ' | ' . get_bloginfo('name', 'display');
 		$seo_description = ( array_key_exists('seo_description', $post_meta ) ) ? $this->clean_attr( $post_meta['seo_description'][0] ): null;
 		$seo_description_default = $this->get_post_description( true );
 		$seo_keywords = ( array_key_exists('seo_keywords', $post_meta ) ) ? $this->clean_attr( $post_meta['seo_keywords'][0] ) : null;
@@ -137,7 +137,9 @@ class TRY_SEO {
 		}
 
 		// Provide filter and return stripped and cleaned title
-		return $this->clean_attr( apply_filters('seo_title', $title ) );
+		if( !empty( $title ) ) {
+			return $this->clean_attr( apply_filters('seo_title', $title ) );
+		}
 	}
 
 	public function seo_description() {
@@ -169,7 +171,7 @@ class TRY_SEO {
 		
 		// TODO : Allow admin to call wp_get_document_title
 		if( is_admin() ) {
-			$seo_title = ( $seo_title ) ? $seo_title : get_the_title() . ' | ' .  get_bloginfo('name');
+			$seo_title = ( $seo_title ) ? $seo_title : get_the_title();
 		} else {
 			// Remove seo_title filter to avoid infinite loop
 			remove_filter('pre_get_document_title', array( $this, 'seo_title' ), 10 );
