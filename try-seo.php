@@ -1,9 +1,4 @@
 <?php
-/**
-*
-* @package TRY
-*
-*/
 
 /*
 Plugin Name: TRY SEO
@@ -21,7 +16,7 @@ if ( __FILE__ == $_SERVER['SCRIPT_FILENAME'] )
 
 class TRY_SEO {
 	var $google_title_limit = 60;
-	var $google_description_limit = 300; 
+	var $google_description_limit = 300;
 
 	public function __construct() {
 		
@@ -34,7 +29,7 @@ class TRY_SEO {
 			add_action('wp_ajax_get_identical_meta', array( $this, 'get_identical_meta') );
 			add_action('wp_ajax_nopriv_get_identical_meta', array( $this, 'get_identical_meta') );
 		} else {
-			add_filter('wp_title', array( $this, 'seo_title' ), 10, 2 );
+			add_filter('pre_get_document_title', array( $this, 'seo_title' ), 10 );
 			add_action('wp_head', array( $this, 'seo_description'), 10 );
 			add_action('wp_head', array( $this, 'seo_keywords'), 10 );
 		}
@@ -130,111 +125,21 @@ class TRY_SEO {
 		
 		$results = get_posts($args, ARRAY_N);		
 				
-		//// Still debugging SQL query fallback ////
-		
-		/*
-		if(count($results) === 0 && strlen($post_field) > 0){
-			$allowed_post_fields = array('post_title', 'post_content', 'post_date', 'post_author', 'post_excerpt', 'post_name', 'guid');
-			
-			if(in_array($post_field, $allowed_post_fields)){
-				$sql_results = $wpdb->get_results( $wpdb->prepare( "SELECT id FROM $wpdb->posts WHERE ".$post_field." = %s AND post_status = 'publish'", $wpdb->escape($value)), ARRAY_N );
-				$results = array();
-				foreach($sql_results as $sql_result){
-					$id = intval(current($sql_result));
-					if(strlen(get_post_meta($id, $key, true)) === 0 ){
-						$results[] = $id;
-					}
-				}
-			}
-		}
-		*/
-		
 		if(count($results) > 0) {
 			printf('<span>This SEO field contains duplicate content from <a href="%s" target="_blank">another post</a>.', admin_url('post.php?post='.current($results).'&action=edit'));
 		}
 		exit;
 	}
 
-	public function seo_title( $title, $sep ) {
-		global $post, $page, $paged;
-
-		// Make sure the post object is set correctly
-		$post = get_queried_object();
-
-		// Return default title for feeds
-		if ( is_feed() ) {
-			return $title;
-		}
-
-		// Create array for parts of title
-		$title_parts = array();
-
-		// Build title parts depending on the type of page being viewed
+	public function seo_title() {
 		if( is_singular() || $this->is_posts_page() ) {
-			$title_parts[] = $this->get_post_title();
-		} elseif( is_category() || is_tag() || is_tax() ) {
-			$title_parts[] = single_term_title( '', false );
-		} elseif( is_author() ) {
-			$title_parts[] = get_the_author_meta( 'display_name', get_query_var( 'author' ) );
-		} elseif( is_post_type_archive() ) {
-			$post_type = get_query_var( 'post_type' );
-
-			if ( is_array( $post_type ) ) {
-				$post_type = reset( $post_type );
-			}
-
-			$post_type_obj = get_post_type_object( $post_type );
-			if ( isset( $post_type_obj->labels->menu_name ) ) {
-				$title_parts[] = $post_type_obj->labels->menu_name;
-			} elseif ( isset( $post_type_obj->name ) ) {
-				$title_parts[] = $post_type_obj->name;
-			}
-		} elseif( is_archive() ) {
-			if ( is_day() ) {
-				$title_parts[] = __('Daily Archives', 'try_seo');
-				$title_parts[] = get_the_date();
-			} elseif ( is_month() ) {
-				$title_parts[] = __('Monthly Archives', 'try_seo');
-				$title_parts[] = single_month_title( ' ', false );
-			} elseif ( is_year() ) {
-				$title_parts[] = __('Yearly Archives', 'try_seo');
-				$title_parts[] = get_query_var('year');
-			} else {
-				$title_parts[] = __('Archives', 'try_seo');
-			}
-		} elseif( is_search() ) {
-			$title_parts[] = sprintf( __( 'Search results for "%s"', 'wordpress-seo' ), esc_html( get_search_query() ) );
-		} elseif( is_404() ) {
-			$title_parts[] = __('Page Not Found');
+			$title = $this->get_post_title();
 		}
-
-		// Add a page number if necessary
-		if ( ( $paged > 1 || $page > 1 ) && ! is_404() ) {
-			$title_parts[] = sprintf( __('Page %s', 'try_seo'), max( $paged, $page ) );
-		}
-
-		// Add site title to front if front page or end for any other page
-		$site_title = get_bloginfo('name', 'display');
-		if( ( is_front_page() ) ) {
-			if( is_home() ) array_unshift( $title_parts, $site_title );
-		} else {
-			$title_parts[] = $site_title;
-		}
-
-		// Add site tagline to end on the front page only
-		if( is_front_page() ) {
-			$description = get_bloginfo('description', 'display');
-			if( $description ) $title_parts[] = $description;
-		}
-
-		// Assemble title parts
-		$title = implode( " $sep ", $title_parts );
-
-		// Reset query just in case
-		wp_reset_query();
 
 		// Provide filter and return stripped and cleaned title
-		return $this->clean_attr( apply_filters('seo_title', $title ) );
+		if( !empty( $title ) ) {
+			return $this->clean_attr( apply_filters('seo_title', $title ) );
+		}
 	}
 
 	public function seo_description() {
@@ -261,15 +166,31 @@ class TRY_SEO {
 
 	protected function get_post_title( $is_default = false ) {
 		global $post;
+
 		$seo_title = ( $is_default ) ? false : trim( get_post_meta( $post->ID, 'seo_title', true ) );
-		$seo_title = ( $seo_title ) ? $seo_title : $post->post_title;
+		
+		// TODO : Allow admin to call wp_get_document_title
+		if( is_admin() ) {
+			$seo_title = ( $seo_title ) ? $seo_title : get_the_title();
+		} else {
+			// Remove seo_title filter to avoid infinite loop
+			remove_filter('pre_get_document_title', array( $this, 'seo_title' ), 10 );
+
+			$seo_title = ( $seo_title ) ? $seo_title : wp_get_document_title();
+
+			// Reinstate seo_title filter
+			add_filter('pre_get_document_title', array( $this, 'seo_title' ), 10 );
+		}
+
 		return $this->clean_attr( $seo_title );
 	}
 
 	protected function get_post_description( $is_default = false ) {
 		global $post;
+	
 		$seo_description = ( $is_default ) ? false : trim( get_post_meta( $post->ID, 'seo_description', true ) );
 		$seo_description = ( $seo_description ) ? $seo_description : $this->get_excerpt( $post->post_content );
+		
 		return $this->clean_attr( $seo_description );
 	}
 
