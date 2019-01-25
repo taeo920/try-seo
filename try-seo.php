@@ -232,7 +232,7 @@ class TRY_SEO {
      */
     protected function get_post_id( $post ) {
         if ( $this->is_posts_page() ) {
-            return get_option( 'page_for_posts' );
+            return get_option( 'page_for_posts' ) ? get_option( 'page_for_posts' ) : $post->ID;
         } else {
             return $post->ID;
         }
